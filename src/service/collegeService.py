@@ -2,6 +2,7 @@ from model.college import CollegeModel
 from PyQt5.QtSql import QSqlQuery
 from errors.validationError import ValidationError
 from core.signals import signals
+import re
 
 class CollegeService:
 
@@ -63,16 +64,16 @@ class CollegeService:
             if not data.get("code"):
                 errors["code"] = "Code required"
             else:
-                if CollegeService.get_by_code(data["code"]):
+                if not re.match(r"^[A-Z]+$", data["code"]):
+                    errors["code"] = "Code must contain uppercase letters only (A-Z)"
+                elif CollegeService.get_by_code(data["code"]):
                     errors["code"] = "College code already exists"
 
         if not data.get("name"):
             errors["name"] = "Name required"
-
         else:
             if "name" in data and not data["name"]:
                 errors["name"] = "Name cannot be empty"
-
 
         if errors:
             raise ValidationError(errors)

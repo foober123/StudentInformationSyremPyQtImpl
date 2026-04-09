@@ -63,29 +63,40 @@ class StudentService:
     @staticmethod
     def _validate_student(data, update=False):
         errors = {}
+        name_pattern = r"^[A-Za-z]+(?:[ -][A-Za-z]+)*$"
+
 
         if not update:
             if not data.get("id"):
                 errors["id"] = "ID required"
             else:
-                if not re.match(r"^\d{4}-\d{4}$", data["id"]):
-                    errors["id"] = "Format must be YYYY-NNNN"
+                if not re.match(r"^20\d{2}-\d{4}$", data["id"]):
+                    errors["id"] = "Format must be 20XX-XXXX"
 
             if not data.get("firstname"):
                 errors["firstname"] = "Firstname required"
+            elif not re.match(name_pattern, data["firstname"]):
+                errors["firstname"] = "Firstname must contain letters only"
 
             if not data.get("lastname"):
                 errors["lastname"] = "Lastname required"
+            elif not re.match(name_pattern, data["lastname"]):
+                errors["lastname"] = "Lastname must contain letters only"
 
             if StudentService._student_exists(data["id"]):
                 errors["id"] = ("Student already exists")
 
         else:
+
             if "firstname" in data and not data["firstname"]:
                 errors["firstname"] = "Firstname cannot be empty"
+            elif not re.match(name_pattern, data["firstname"]):
+                errors["firstname"] = "Firstname must contain letters only"
 
             if "lastname" in data and not data["lastname"]:
                 errors["lastname"] = "Lastname cannot be empty"
+            elif not re.match(name_pattern, data["lastname"]):
+                errors["lastname"] = "Lastname must contain letters only"
 
         if "course" not in data or not data["course"]:
             errors["course"] = "Course is required"

@@ -2,7 +2,7 @@ from model.program import ProgramModel
 from service.collegeService import CollegeService
 from errors.validationError import ValidationError
 from core.signals import signals
-
+import re
 
 class ProgramService:
 
@@ -31,19 +31,10 @@ class ProgramService:
         signals.data_changed.emit("program")
         return result
 
-    @staticmethod
     def get_by_code(code):
         if not code:
             raise ValidationError("Missing program code")
-
-        program = ProgramModel.get_by_code(code)
-
-        if not program:
-            raise ValidationError("Program not found")
-
-        return program
-
-
+        return ProgramModel.get_by_code(code)
 
     @staticmethod
     def get(limit, offset, field=None, text=None, sort=None, sort_order="ASC"):
@@ -56,12 +47,16 @@ class ProgramService:
     @staticmethod
     def _validate_program(data, update=False):
         errors = {}
+        code_pattern = r"^[A-Za-z]+(?:[ -][A-Za-z]+)*$"
+
 
         if not update:
             if not data.get("code"):
                 errors["code"] = "Code required"
             else:
-                if ProgramService.get_by_code(data["code"]):
+                if not re.match(code_pattern, data["code"]):
+                    errors["code"] = "Code must contain letters only"
+                elif ProgramService.get_by_code(data["code"]):
                     errors["code"] = "Program code already exists"
 
             if not data.get("name"):
@@ -73,9 +68,15 @@ class ProgramService:
                 if not CollegeService.get_by_code(data["college"]):
                     errors["college"] = "Invalid college"
 
+            if "code" in data and not data["code"]:
+                errors["code"] = "Code cannot be empty"
+
+        else:
             if "code" in data:
                 if not data["code"]:
                     errors["code"] = "Code cannot be empty"
+                elif not re.match(code_pattern, data["code"]):
+                    errors["code"] = "Code must contain letters only"
 
         if "name" in data and not data["name"]:
             errors["name"] = "Name cannot be empty"
@@ -89,4 +90,3 @@ class ProgramService:
 
         if errors:
             raise ValidationError(errors)
-
