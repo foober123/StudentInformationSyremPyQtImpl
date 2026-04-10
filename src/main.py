@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from database.db import connect_db
 from ui.dashboard import Dashboard
-from misc.student_generator import seed_students
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -15,9 +15,7 @@ class MainWindow(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-
     connect_db()
-    seed_students(10000)
     window = MainWindow()
     window.show()
 

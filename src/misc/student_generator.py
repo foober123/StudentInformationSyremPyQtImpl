@@ -2,6 +2,7 @@ from PyQt5.QtSql import QSqlQuery, QSqlDatabase
 import random
 from faker import Faker
 from datetime import datetime
+from collections import defaultdict
 
 fake = Faker()
 
@@ -18,10 +19,16 @@ def seed_students(count=10000):
     current_year = datetime.now().year
     values = []
 
-    for i in range(1, count + 1):
+    year_counters = defaultdict(int)
+
+    for _ in range(count):
         year_prefix = random.randint(current_year - 5, current_year)
 
-        student_id = generate_student_id(year_prefix, i)
+        year_counters[year_prefix] += 1
+        sequence = year_counters[year_prefix]
+
+        student_id = generate_student_id(year_prefix, sequence)
+
         firstname = fake.first_name().replace("'", "''")
         lastname = fake.last_name().replace("'", "''")
         course = random.choice(PROGRAMS)
@@ -42,7 +49,7 @@ def seed_students(count=10000):
 
     if not query.exec(sql):
         print("Insert Error:", query.lastError().text())
-        db.rollback()  # ❌ rollback on failure
+        db.rollback()
     else:
-        db.commit()  # ✅ commit if success
+        db.commit()
         print(f"Inserted {count} students successfully")

@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QAbstractItemView
 from PyQt5.QtWidgets import QFormLayout, QGroupBox
 from PyQt5.QtWidgets import QSizePolicy
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QSplitter
 
 class BaseTable(QWidget):
     def __init__(self, page_size=10):
@@ -23,7 +24,6 @@ class BaseTable(QWidget):
         self.layout = QVBoxLayout()
         self.top_bar = QHBoxLayout()
         self.table = QTableView()
-        self.pagination_layout = QHBoxLayout()
 
         self.model = QSqlQueryModel()
 
@@ -46,32 +46,37 @@ class BaseTable(QWidget):
         self.btn_next = QPushButton(">")
         self.btn_last = QPushButton(">>")
 
-        # Center the pagination
         pagination_container = QHBoxLayout()
         pagination_container.addStretch()
-
         pagination_container.addWidget(self.btn_first)
         pagination_container.addWidget(self.btn_prev)
         pagination_container.addWidget(self.page_label)
         pagination_container.addWidget(self.btn_next)
         pagination_container.addWidget(self.btn_last)
-
         pagination_container.addStretch()
 
-
         self.details_group = QGroupBox("Details")
-        self.details_layout = QGridLayout() 
+        self.details_layout = QGridLayout()
         self.details_group.setLayout(self.details_layout)
 
-        self.details_labels = []  # store value labels
+        self.details_labels = []
 
+        self.details_group.setMinimumHeight(120)  # prevents collapsing
 
         self.details_group.setStyleSheet("""
             QGroupBox {
+                border: none;
+                margin-top: 10px;
                 font-size: 14px;
                 font-weight: bold;
-                margin-top: 10px;
             }
+
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+            }
+
             QLabel {
                 font-size: 14px;
             }
@@ -89,28 +94,24 @@ class BaseTable(QWidget):
         header.setSectionResizeMode(QHeaderView.Stretch)
         self.table.verticalHeader().setDefaultSectionSize(40)
 
+        from PyQt5.QtWidgets import QSplitter
+
+        self.splitter = QSplitter(Qt.Vertical)
+        self.splitter.addWidget(self.table)
+        self.splitter.addWidget(self.details_group)
+        self.splitter.setSizes([400, 200])  # initial ratio
+
         self.layout.addLayout(self.top_bar)
-        self.layout.addWidget(self.table, stretch=3)
-
-
-
-        self.layout.addWidget(self.details_group, stretch=2)
-
-
+        self.layout.addWidget(self.splitter)
         self.layout.addLayout(pagination_container)
-
-
 
         self.setLayout(self.layout)
 
         self.sort_column = None
         self.sort_order = "ASC"
-        self.table.setSortingEnabled(False) 
+        self.table.setSortingEnabled(False)
 
-        header = self.table.horizontalHeader()
         header.sectionClicked.connect(self.handle_sort)
-
-        # Signals
 
         self.btn_first.clicked.connect(self.first_page)
         self.btn_prev.clicked.connect(self.prev_page)
@@ -121,6 +122,7 @@ class BaseTable(QWidget):
         self.btn_clear.clicked.connect(self.clear_search)
 
         self.load_data()
+
 
     def get_query(self, limit, offset, search_field=None, search_text=None, sort_column=None, sort_order="ASC"):
         raise NotImplementedError
